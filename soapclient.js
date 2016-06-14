@@ -169,7 +169,11 @@ SOAPClient.authUser = null;
 SOAPClient.authPass = null;
 SOAPClient.explicitNS = false;
 SOAPClient.interface = "";
-SOAPClient.cors = false
+SOAPClient.cors = false;
+
+SOAPClient.tagName = null;
+SOAPClient.tagNameSufix = null;
+
 
 SOAPClient.invoke = function(url, method, parameters, async, callback)
 {
@@ -277,11 +281,28 @@ SOAPClient._sendSoapRequest = function(url, method, parameters, async, callback,
 SOAPClient._onSendSoapRequest = function(method, async, callback, wsdl, req) 
 {
     var o = null;
-    var nd = SOAPClient._getElementsByTagName(req.responseXML, method + "Result");
-    if(nd.length == 0)
-        nd = SOAPClient._getElementsByTagName(req.responseXML, "return");	// PHP web Service?
-    if(nd.length == 0)
-        nd = SOAPClient._getElementsByTagName(req.responseXML, method + "Return");	// new PHP web Service?
+
+    // backward compatibility
+    if (SOAPClient.tagName === null && SOAPClient.tagNameSufix === null) {
+        var nd = SOAPClient._getElementsByTagName(req.responseXML, method + "Result");
+        if(nd.length == 0)
+            nd = SOAPClient._getElementsByTagName(req.responseXML, "return");	// PHP web Service?
+        if(nd.length == 0)
+            nd = SOAPClient._getElementsByTagName(req.responseXML, method + "Return");	// new PHP web Service?
+    } else {
+        var tagName = null;
+
+        if (SOAPClient.tagName === null) {
+            tagName = method;
+        } else {
+            tagName = SOAPClient.tagName;
+        }
+        if (SOAPClient.tagNameSufix) {
+            tagName = tagName + SOAPClient.tagNameSufix;
+        }
+
+        nd = SOAPClient._getElementsByTagName(req.responseXML, tagName);
+    }
     if(nd.length == 0)
     {
         if(req.responseXML.getElementsByTagName("faultcode").length > 0)
